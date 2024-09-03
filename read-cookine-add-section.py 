@@ -1,0 +1,82 @@
+The error messages no such table: cookies and no such table: urls suggest that the script is not accessing the correct database files, or the files may not be structured as expected. This could occur if:
+
+    The wrong database files were copied to the temporary directory.
+    The Firefox profile is using a different structure or has variations in how the tables are named or stored.
+
+Steps to Troubleshoot and Resolve:
+1. Verify the Correct Files are Being Copied
+
+Ensure that the cookies.sqlite and places.sqlite files from the active Firefox profile are being copied correctly. Double-check the paths and confirm that these files contain the expected data.
+
+You can manually open the cookies.sqlite and places.sqlite files using a SQLite browser to inspect their contents and verify the tables.
+2. Check the Active Profile
+
+You might be copying files from an inactive profile. Let's ensure that you are working with the correct, active profile by verifying the profile currently being used by Firefox:
+
+    Open Firefox and go to about:profiles.
+    Confirm which profile is active. This is typically labeled "This is the profile in use and it cannot be deleted."
+
+Update the script to use the active profile path.
+3. Open the Correct Tables
+
+Make sure the script is looking for the correct tables:
+
+    For cookies: The table is usually named cookies.
+    For history: The table is usually named moz_places, and the visit information is stored in a table named moz_historyvisits.
+
+You can adjust the script to check for these tables:
+
+
+
+
+def read_cookies(cookies_db):
+    try:
+        conn = sqlite3.connect(f"file:{cookies_db}?mode=ro", uri=True)
+        cursor = conn.cursor()
+        # Adjust the query to match the actual table structure
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cursor.fetchall()
+        print(f"Available tables in cookies database: {tables}")
+
+        cursor.execute("SELECT host_key, name, value, creation_utc, last_access_utc, expires_utc FROM cookies")
+
+        cookies = []
+        for host, name, value, creation, last_access, expires in cursor.fetchall():
+            cookies.append({
+                "host": host,
+                "name": name,
+                "value": value,
+                "creation": datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=creation),
+                "last_access": datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=last_access),
+                "expires": datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=expires) if expires != 0 else "Session"
+            })
+        conn.close()
+        return cookies
+    except sqlite3.OperationalError as e:
+        print(f"Error reading cookies: {e}")
+        return []
+
+def read_history(history_db):
+    try:
+        conn = sqlite3.connect(f"file:{history_db}?mode=ro", uri=True)
+        cursor = conn.cursor()
+        # Adjust the query to match the actual table structure
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cursor.fetchall()
+        print(f"Available tables in history database: {tables}")
+
+        cursor.execute("SELECT url, title, visit_count, last_visit_time FROM moz_places")
+
+        history = []
+        for url, title, visit_count, last_visit_time in cursor.fetchall():
+            history.append({
+                "url": url,
+                "title": title,
+                "visit_count": visit_count,
+                "last_visit": datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=last_visit_time)
+            })
+        conn.close()
+        return history
+    except sqlite3.OperationalError as e:
+        print(f"Error reading history: {e}")
+        return []
