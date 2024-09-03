@@ -13,7 +13,7 @@ Markdown Files
     digital-ecosystem.md
     This file provides an overview of the digital ecosystem, discussing the various data points collected, how they are used in different industries, and their impact on public behavior and privacy.
 
-    Influence.md
+    Data-Influence.md
     A document focusing on the influence of data-driven manipulation and its parallels to cult-like behavior. It provides strategies on how individuals can protect themselves from undue influence, particularly in the context of AI and data analytics.
 
     Knowledge-LUMAscape.md
